@@ -44,8 +44,25 @@ def main():
 
         # Get input from Arduino
         # final position x, y, z, orientation x, y, z
-        # JSON format?
-
+        
+        # May need to callibrate and have Baxter move to 0,0,0,0,0,0 upon start up
+        # Will need to move this outside the while loop
+        # Construct the request
+        #request_cal = GetPositionIKRequest()
+        #request_cal.ik_request.group_name = "left_arm"
+        #request_cal.ik_request.ik_link_name = "left_gripper"
+        #request_cal.ik_request.attempts = 20
+        #request_cal.ik_request.pose_stamped.header.frame_id = "base"
+        
+        #Set the desired orientation for the end effector HERE
+        #request_cal.ik_request.pose_stamped.pose.position.x = 0.0
+        #request_cal.ik_request.pose_stamped.pose.position.y = 0.0
+        #request_cal.ik_request.pose_stamped.pose.position.z = 0.0
+        #request_cal.ik_request.pose_stamped.pose.orientation.x = 0.0
+        #request_cal.ik_request.pose_stamped.pose.orientation.y = 0.0
+        #request_cal.ik_request.pose_stamped.pose.orientation.z = 0.0
+        #request_cal.ik_request.pose_stamped.pose.orientation.w = 0.0
+        
         #Construct the request
         request = GetPositionIKRequest()
         request.ik_request.group_name = "left_arm"
@@ -54,29 +71,13 @@ def main():
         request.ik_request.pose_stamped.header.frame_id = "base"
         
         #Set the desired orientation for the end effector HERE
-        request.ik_request.pose_stamped.pose.position.x = 0.711
-        request.ik_request.pose_stamped.pose.position.y = 0.743
-        request.ik_request.pose_stamped.pose.position.z = -0.059      
-        request.ik_request.pose_stamped.pose.orientation.x = 0.0
-        request.ik_request.pose_stamped.pose.orientation.y = 1.0
-        request.ik_request.pose_stamped.pose.orientation.z = 0.0
+        request.ik_request.pose_stamped.pose.position.x = float(data[0])
+        request.ik_request.pose_stamped.pose.position.y = float(data[1])
+        request.ik_request.pose_stamped.pose.position.z = float(data[2])
+        request.ik_request.pose_stamped.pose.orientation.x = float(data[3])
+        request.ik_request.pose_stamped.pose.orientation.y = float(data[4])
+        request.ik_request.pose_stamped.pose.orientation.z = float(data[5])
         request.ik_request.pose_stamped.pose.orientation.w = 0.0
-
-        #Construct the request
-        request2 = GetPositionIKRequest()
-        request2.ik_request.group_name = "left_arm"
-        request2.ik_request.ik_link_name = "left_gripper"
-        request2.ik_request.attempts = 20
-        request2.ik_request.pose_stamped.header.frame_id = "base"
-        
-        #Set the desired orientation for the end effector HERE
-        request2.ik_request.pose_stamped.pose.position.x = 0.786
-        request2.ik_request.pose_stamped.pose.position.y = 0.086
-        request2.ik_request.pose_stamped.pose.position.z = -0.032      
-        request2.ik_request.pose_stamped.pose.orientation.x = 0.0
-        request2.ik_request.pose_stamped.pose.orientation.y = 1.0
-        request2.ik_request.pose_stamped.pose.orientation.z = 0.0
-        request2.ik_request.pose_stamped.pose.orientation.w = 0.0
         
         try:
             #Send the request to the service
@@ -90,32 +91,25 @@ def main():
             group.set_pose_target(request.ik_request.pose_stamped)
 
             group.go()
-
-            left_gripper = robot_gripper.Gripper('left')
+            
+            # Code for gripper, to be used with flex-sensor
+            #left_gripper = robot_gripper.Gripper('left')
             #Calibrate the gripper (other commands won't work unless you do this first)
-            print('Calibrating...')
-            left_gripper.calibrate()
-            rospy.sleep(2.0)
+            #print('Calibrating...')
+            #left_gripper.calibrate()
+            #rospy.sleep(2.0)
 
-            #Close the right gripper
-            print('Closing...')
-            left_gripper.close()
-            rospy.sleep(1.0)
+            #If flex sensor detects close:
+            #Close the left gripper
+            #print('Closing...')
+            #left_gripper.close()
+            #rospy.sleep(1.0)
 
-
-
-            # Setting position and orientation target
-            group.set_pose_target(request2.ik_request.pose_stamped)
-            group.go()
-
-            #Close the right gripper
-            print('Opening...')
-            left_gripper.open()
-            rospy.sleep(1.0)
-
-            # TRY THIS
-            # Setting just the position without specifying the orientation
-            ###group.set_position_target([0.5, 0.5, 0.0])
+            #If flex sensor detects open
+            #open the left gripper
+            #print('Opening...')
+            #left_gripper.open()
+            #rospy.sleep(1.0)
             
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
