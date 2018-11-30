@@ -6,6 +6,8 @@ from moveit_commander import MoveGroupCommander
 import numpy as np
 from numpy import linalg
 from baxter_interface import gripper as robot_gripper
+from tf.msg import tfMessage
+from tf.transformations import quaternion_from_euler
 import serial #To install
 
 # https://arduino.stackexchange.com/questions/45874/arduino-serial-communication-with-python-sending-an-array
@@ -44,25 +46,7 @@ def main():
 
         # Get input from Arduino
         # final position x, y, z, orientation x, y, z
-        
-        # May need to callibrate and have Baxter move to 0,0,0,0,0,0 upon start up
-        # Will need to move this outside the while loop
-        # Construct the request
-        #request_cal = GetPositionIKRequest()
-        #request_cal.ik_request.group_name = "left_arm"
-        #request_cal.ik_request.ik_link_name = "left_gripper"
-        #request_cal.ik_request.attempts = 20
-        #request_cal.ik_request.pose_stamped.header.frame_id = "base"
-        
-        #Set the desired orientation for the end effector HERE
-        #request_cal.ik_request.pose_stamped.pose.position.x = 0.0
-        #request_cal.ik_request.pose_stamped.pose.position.y = 0.0
-        #request_cal.ik_request.pose_stamped.pose.position.z = 0.0
-        #request_cal.ik_request.pose_stamped.pose.orientation.x = 0.0
-        #request_cal.ik_request.pose_stamped.pose.orientation.y = 0.0
-        #request_cal.ik_request.pose_stamped.pose.orientation.z = 0.0
-        #request_cal.ik_request.pose_stamped.pose.orientation.w = 0.0
-        
+
         #Construct the request
         request = GetPositionIKRequest()
         request.ik_request.group_name = "left_arm"
@@ -71,13 +55,24 @@ def main():
         request.ik_request.pose_stamped.header.frame_id = "base"
         
         #Set the desired orientation for the end effector HERE
+	    # x is forward/backward
         request.ik_request.pose_stamped.pose.position.x = float(data[0])
+	    # y is left/right
         request.ik_request.pose_stamped.pose.position.y = float(data[1])
+	    # z is up/down
         request.ik_request.pose_stamped.pose.position.z = float(data[2])
-        request.ik_request.pose_stamped.pose.orientation.x = float(data[3])
-        request.ik_request.pose_stamped.pose.orientation.y = float(data[4])
-        request.ik_request.pose_stamped.pose.orientation.z = float(data[5])
-        request.ik_request.pose_stamped.pose.orientation.w = 0.0
+
+	    # orientation given from IMU in radians (roll, pitch, yaw)
+        # convert from (roll, pitch, yaw) into quaternion
+	    orient_quat = quaternion_from_euler(float(data[3]), float(data[4]), float(data[5]))
+	    # x is roll
+        request.ik_request.pose_stamped.pose.orientation.x = orient_quat[0]
+	    # y is pitch
+        request.ik_request.pose_stamped.pose.orientation.y = orient_quat[1]
+	    # z is yaw
+        request.ik_request.pose_stamped.pose.orientation.z = orient_quat[2]
+	    # negate w for inverse
+        request.ik_request.pose_stamped.pose.orientation.w = orient_quat[3]
         
         try:
             #Send the request to the service
@@ -94,19 +89,19 @@ def main():
             
             # Code for gripper, to be used with flex-sensor
             #left_gripper = robot_gripper.Gripper('left')
-            #Calibrate the gripper (other commands won't work unless you do this first)
+            # Calibrate the gripper (other commands won't work unless you do this first)
             #print('Calibrating...')
             #left_gripper.calibrate()
             #rospy.sleep(2.0)
 
-            #If flex sensor detects close:
-            #Close the left gripper
+            # If flex sensor detects close:
+            # Close the left gripper
             #print('Closing...')
             #left_gripper.close()
             #rospy.sleep(1.0)
 
-            #If flex sensor detects open
-            #open the left gripper
+            # If flex sensor detects open
+            # open the left gripper
             #print('Opening...')
             #left_gripper.open()
             #rospy.sleep(1.0)
