@@ -22,7 +22,7 @@ def main():
     compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
     
     while not rospy.is_shutdown():
-        raw_input('Press [ Enter ]: ')
+        # raw_input('Press [ Enter ]: ')
         
         try: 
             arduino = serial.Serial("/dev/ttyACM0", 115200)
@@ -31,18 +31,23 @@ def main():
             continue;
 
 	while True:
-            print("Data from arduino = " + arduino.readline().decode("utf-8"))
+            data_arduino = arduino.readline().decode("utf-8")
+            print("Data from arduino = " + data_arduino)
 
-        if (len(arduino.readline()) == 0):
+        if (len(data_arduino) == 0):
             print ("No data from arduino")
             continue
 
         #If decoding is needed
         #decoded_bytes = float(ser_bytes[0:len(ser_bytes)-2].decode("utf-8"))
         # print(decoded_bytes)
-        data1 = arduino.readline().decode("utf-8")
-	print(i for i in data1)
-	data = [float(i) for i in data1]
+        # data1 = arduino.readline().decode("utf-8")
+	# print(i for i in data1)
+	# data = [float(i) for i in data1]
+
+    print(i for i in data_arduino.split(" "))
+    data = [float(i) for i in data_arduino.split(" ")]
+
 	#print("x1, y1, x2, y2", data[0],data[1],data[2],data[3],data[4],data[5])
 	# data = [x1, y1, x2, y2, imu_yaw(z), imu_pitch(y), imu_roll(x)]
 	# x_meters = x_pixels *0.609 / 1000
