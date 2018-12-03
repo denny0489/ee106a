@@ -25,6 +25,18 @@ Discussed current progress
 	Still need power for IR sensor
 Discussed further meeting times/schedules
 
+11/30/18
+10:00am-2:30pm
+IK.py converts sample data correctly
+IK.py successfully controls Baxter using sample data
+
+12/2/18
+10:00am-3:00pm
+Got IR cameras sending data to Arduino calibrated
+IR camera wires soldered to hopefully fix problem where first two or second two values are read as 0
+IK.py successfully (and continuously) reads data from Arduino
+IK.py (should) format data correctly but is untested
+
 
 
 
