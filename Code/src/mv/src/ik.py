@@ -9,7 +9,7 @@ from baxter_interface import gripper as robot_gripper
 from tf.msg import tfMessage
 from tf.transformations import quaternion_from_euler
 import math
-from serial import * #To install
+import serial #To install
 
 # https://arduino.stackexchange.com/questions/45874/arduino-serial-communication-with-python-sending-an-array
 
@@ -21,60 +21,72 @@ def main():
     #Create the function used to call the service
     compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
     
-    while not rospy.is_shutdown():
-        # raw_input('Press [ Enter ]: ')
-        
+    while not rospy.is_shutdown():   
+        # attempt to connect to Arduinio
         try: 
             arduino = serial.Serial("/dev/ttyACM0", 115200)
         except:
-            print("Error when getting data from arduino")
+            print("Error when getting data from Arduino")
             continue;
 
-	while True:
-            data_arduino = arduino.readline().decode("utf-8")
-            print("Data from arduino = " + data_arduino)
+	
+        #while True:
+        #    print("Data from arduino = " + arduino.readline().decode("utf-8","ignore"))
 
-        if (len(data_arduino) == 0):
+        if (len(arduino.readline()) == 0):
             print ("No data from arduino")
             continue
 
-        #If decoding is needed
-        #decoded_bytes = float(ser_bytes[0:len(ser_bytes)-2].decode("utf-8"))
-        # print(decoded_bytes)
-        # data1 = arduino.readline().decode("utf-8")
-	# print(i for i in data1)
-	# data = [float(i) for i in data1]
-
-    print(i for i in data_arduino.split(" "))
-    data = [float(i) for i in data_arduino.split(" ")]
-
-	#print("x1, y1, x2, y2", data[0],data[1],data[2],data[3],data[4],data[5])
-	# data = [x1, y1, x2, y2, imu_yaw(z), imu_pitch(y), imu_roll(x)]
-	# x_meters = x_pixels *0.609 / 1000
-	# y_meters = y_pixels *0.609 / 750
-
-	# -x1_world 		= y_baxter		in pixels
-	pos_y = data[0] / 1000
+        # Data from Arduino is a single string
+        # Data needs to be decoded, split, have start and end strings removed, and converted to floats
+        data1=[]
+        data1 = arduino.readline().decode("utf-8", "ignore").split(" ")
 	
-	# -(1/2)(y1 + y2)_world = z_baxter		in pixels
-	pos_z = (1/2)*(data[1] + data[3]) / 750
+        # first element has an additional "u'" on the front that needs to be stripped
+        data1[0] = data1[0][2:]
+	
+        # last element has an additional "\r\n'" on the end that needs to be stripped
+        len_last = len(data1[6])
+        data1[6] = data1[6][:len_last-5]
+	
+        # attempt to convert string from Arduino into floats
+        try:
+            data = [float(i) for i in data1]
+        # if float conversion fails skip this iteration
+        except:
+            print("Bad data, cannot be converted to float")
+            continue
 
-	# x2_world 		= x_baxter		in pixels
-	pos_x = data[2] / 1000
+        # print("x1, y1, x2, y2", data[0],data[1],data[2],data[3],data[4],data[5])
+        # data from Arduino is of the form [x1, y1, x2, y2, imu_yaw(z), imu_pitch(y), imu_roll(x)]
+        # x_meters = x_pixels *0.609 / 1000
+        # y_meters = y_pixels *0.609 / 750
+        # may not need 0.609 term
 
-	# roll, pitch in degrees [-180, 180]
-	# roll sign is inverted and needs to be flipped
-	# yaw in degrees [0, 360]
-	roll = math.radians(data[6])
-	pitch = math.radians(data[5])
-	yaw = data[4]
-	yaw -= 140
-	if yaw > 180:
-	    yaw -= 360
-	yaw = math.radians(yaw)
+        # -x1_world 		= y_baxter		in pixels
+        pos_y = data[0] / 1000
+	
+        # -(1/2)(y1 + y2)_world = z_baxter		in pixels
+        pos_z = (1/2)*(data[1] + data[3]) / 750
+
+        # x2_world 		= x_baxter		in pixels
+        pos_x = data[2] / 1000
+
+        # roll, pitch in degrees [-180, 180]
+        # roll sign is inverted and needs to be flipped
+        # yaw in degrees [0, 360]
+        roll = math.radians(data[6])
+        pitch = math.radians(data[5])
+        yaw = data[4]
+	
+        # yaw is off by 140 degrees
+        # yaw is given in terms of [0, 360] and we want [-180, 180]
+        yaw -= 140
+        if yaw > 180:
+            yaw -= 360
+        yaw = math.radians(yaw)
 	
 	
-
         #Construct the request
         request = GetPositionIKRequest()
         request.ik_request.group_name = "left_arm"
@@ -83,31 +95,31 @@ def main():
         request.ik_request.pose_stamped.header.frame_id = "base"
         
         #Set the desired orientation for the end effector HERE
-	# x is forward/backward
+        # x is forward/backward
         request.ik_request.pose_stamped.pose.position.x = pos_x
-	# y is left/right
+        # y is left/right
         request.ik_request.pose_stamped.pose.position.y = pos_y
-	# z is up/down
+        # z is up/down
         request.ik_request.pose_stamped.pose.position.z = pos_z
 
-	# orientation given from IMU in radians (roll, pitch, yaw)
+        # orientation given from IMU in radians (roll, pitch, yaw)
         # convert from (roll, pitch, yaw) into quaternion
-	orient_quat = quaternion_from_euler(roll, pitch, yaw)
-	# x is roll
+        orient_quat = quaternion_from_euler(roll, pitch, yaw)
+        # x is roll
         request.ik_request.pose_stamped.pose.orientation.x = orient_quat[0]
-	# y is pitch
+        # y is pitch
         request.ik_request.pose_stamped.pose.orientation.y = orient_quat[1]
-	# z is yaw
+        # z is yaw
         request.ik_request.pose_stamped.pose.orientation.z = orient_quat[2]
-	# negate w for inverse
+        # negate w for inverse
         request.ik_request.pose_stamped.pose.orientation.w = orient_quat[3]
 
-	print("x:, y:, z:", pos_x, pos_y, pos_z, "orientation", orient_quat[0], orient_quat[1], orient_quat[2], orient_quat[3])        
+        print("x:, y:, z:", pos_x, pos_y, pos_z, "orientation", orient_quat[0], orient_quat[1], orient_quat[2], orient_quat[3])        
 
         try:
             #Send the request to the service
             response = compute_ik(request)
-            
+
             #Print the response HERE
             print(response)
             group = MoveGroupCommander("left_arm")
