@@ -1,7 +1,21 @@
 to log into baxter
 ./baxter.sh ayrton.local
 
+new code directions:
+log into baxter
+source devel/setup.bash
+cd ~/ros_workspaces/lab3_baxter/joint_ctrl
+python joint_ctrl_keyboard.py
 
+make sure robot is enabled
+rosrun baxter_tools enable_robot.py -e
+
+make sure robot frames aren't prefaced with "reference"
+rosrun rqt_tf_tree rqt_tf_tree
+
+
+
+old code directions:
 run the following in order in separate terminals, each line is a separate instruction
 
 Terminal 1:
