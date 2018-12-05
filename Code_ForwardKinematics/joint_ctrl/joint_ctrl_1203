@@ -139,18 +139,27 @@ def set_g(action):
 def move_baxter():
     limb = baxter_interface.Limb('left')
 
+    # Check for left_gripper
     #try:
-    #    gripper = baxter_interface.gripper(side + '_gripper')
+    #    gripper = baxter_interface.gripper('left_gripper')
     #except Exception as e:
     #    print (e)
     #    has_gripper = False
-    #    rospy.loginfo("The electric gripper is not detected on the robot.")
+    #    rospy.loginfo("The electric gripper, left_gripper, is not detected on the robot.")
+
+    # Check for reference/left_gripper
+    # Still unsure why sometimes the word reference occasionaly prefaces joint names
+    #try:
+    #    gripper = baxter_interface.gripper('reference/left_gripper')
+    #except:
+    #    has_gripper = False
+    #    rospy.loginfo("The electric gripper, reference/left_gripper, is not detected on the robot.")
     #else:
     #    has_gripper = True
 
     joints = limb.joint_names()
 	
-	# attempt to connect to Arduinio
+    # attempt to connect to Arduinio
     # may want to swap exit for continue
     try: 
         arduino = serial.Serial("/dev/ttyACM0", 115200)
