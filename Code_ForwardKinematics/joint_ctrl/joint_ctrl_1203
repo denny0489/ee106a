@@ -27,30 +27,91 @@ import baxter_external_devices
 
 from baxter_interface import CHECK_VERSION
 
+#set_offset = True
+#offset = 0.0
+
 def set_j(limb, joint_names, data):
+	
+    #ORDER IS YAW PITCH ROLL
+    # data = IMU1, IMU2, IMU3
+    # IMU1 = black = wrist_yaw, wrist_pitch, wrist_roll
+    # IMU2 = green = elbow_yaw , elbow_pitch, elbow_roll
+    # IMU3 = white = shoulder_yaw, shoulder_pitch, shoulder_roll
+    # We don't use elbow or shoulder yaw
+    # We simply use the wrist yaw to control joint left_s0
+
     N = 7
     joint_command = {}
-    # for i in range(N):
-    #     current_position = limb.joint_angle(joint_names[i])
-    #     joint_command[joint_names[i]] = float(data[i])
+
     print(data)
+
+    # Data from first IMU (wrist)
     yaw = data[0] - 150
     if yaw > 180:
         yaw -= 360
     pitch = data[1]
     roll = data[2]
 
+    # Data from second IMU (elbow)
+    # yaw2 = data[3]
+    pitch2 = data[4]
+    roll2 = data[5]
+
+    # Data from third IMU (shoulder)
+    # yaw3 = data[6]
+    pitch3 = data[7]
+    roll3 = data[8]
+
+    # directions given in terms of user/baxter not viewer
+    # yaw: with negation, pos = right, neg = left
+    # pitch: with negation, pos = up, neg = down
+    # roll: with negation, pos = counterclockwise, neg = clockwise
+    
+    # Data from first IMU in rad
     yawRad = -math.radians(yaw)
-    pitchRad = math.radians(pitch)
+    pitchRad = -math.radians(pitch)
     rollRad = -math.radians(roll)
-    joint_command[joint_names[2]] = rollRad
-    joint_command[joint_names[1]] = pitchRad
+
+    # Data from second IMU in rad
+    pitchRad2 = -math.radians(pitch2)
+    rollRad2 = math.radians(roll2)
+
+    # Data from third IMU in rad
+    pitchRad3 = -math.radians(pitch3)
+    rollRad3 = math.radians(roll3)
+
+    #if set_offset:
+    #    offset = -yawRad
+    #    set_offset = False
+
+    #yawRad = yawRad + offset
+
+    # joint_names[0] = left_s0 = yaw
+    # joint_names[1] = left_s1 = shoulder_pitch
+    # joint_names[2] = left_e0 = shoulder_roll
+    # joint_names[3] = left_e1 = elbow_pitch
+    # joint_names[4] = left_w0 = elbow_roll
+    # joint_names[5] = left_w1 = wrist_pitch
+    # joint_names[6] = left_w2 = wrist_roll
+
+    # wrist joints
+    joint_command[joint_names[6]] = rollRad
+    joint_command[joint_names[5]] = pitchRad
+
+    # elbow joints
+    joint_command[joint_names[4]] = rollRad2
+    joint_command[joint_names[3]] = pitchRad2
+
+    #shoulder joints
+    joint_command[joint_names[2]] = rollRad3
+    joint_command[joint_names[1]] = pitchRad3
+
     joint_command[joint_names[0]] = yawRad
 
     limb.set_joint_positions(joint_command)
     #r.sleep()
 
-# currently unused, left in in case we want to use gripper later
+# currently unused, left in case we want to use gripper later with flex sensor
 def set_g(action):
     if has_gripper:
         if action == "close":
@@ -60,12 +121,19 @@ def set_g(action):
         elif action == "calibrate":
             gripper.calibrate()
 
-def map_keyboard():
+###
+# Move Baxter
+# Calibrates Baxter by setting all joint angles to zero initially
+# Retrieves data from Arduino
+# Formats the data and sends it to set_j to be processed
+###
+def move_baxter():
     limb = baxter_interface.Limb('left')
 
     try:
-        gripper = baxter_interface.ripper(side + '_gripper')
-    except:
+        gripper = baxter_interface.gripper(side + '_gripper')
+    except Exception as e:
+        print (e)
         has_gripper = False
         rospy.loginfo("The electric gripper is not detected on the robot.")
     else:
@@ -74,58 +142,73 @@ def map_keyboard():
     joints = limb.joint_names()
 	
 	# attempt to connect to Arduinio
-    try: 
-        arduino = serial.Serial("/dev/ttyACM0", 115200)
-    except:
-        print("Error when getting data from Arduino")
-        exit()
+    # may want to swap exit for continue
+    #try: 
+    #    arduino = serial.Serial("/dev/ttyACM0", 115200)
+    #except:
+    #    print("Error when getting data from Arduino")
+    #    exit()
 
-    #while True:
-    #    print("Data from arduino = " + arduino.readline().decode("utf-8","ignore"))
+    # may want to swap exit for continue
+    #if (len(arduino.readline()) == 0):
+    #    print ("No data from arduino")
+    #    exit()
 
-    if (len(arduino.readline()) == 0):
-        print ("No data from arduino")
-        exit()
-
-    # Data from Arduino is a single string
-    # Data needs to be decoded, split, have start and end strings removed, and converted to floats
-
-
-	# Set joint states 
-    
     done = False
-    # set joint states using data from Arduino
+    calibrate = True
+    # Calibrate by setting all joint angles to zero
+    N = 7
+    while calibrate and not done and not rospy.is_shutdown():
+        # calibrate until at least one joint_angles = 0.0
+        current_angles = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        for i in range(N):
+            current_angles[i] = limb.joint_angle(joints[i])
+        if any(ang == 0.0 for ang in current_angles):
+            calibrate = False
+
+        data=[150.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+        r = rospy.Rate(10)
+        set_j(limb, joints, data)
+        r.sleep()
+
+    # set joint states using data from Arduino once calibration completed
     while not done and not rospy.is_shutdown():
-        data1=[]
-        data1 = arduino.readline().decode("utf-8", "ignore").split(" ")
+        # pure data from Arduino
+        # will be a string that needs to be decoded and split
+        # delimeter is a space
+        #data1 = arduino.readline().decode("utf-8", "ignore").split(" ")
+
+        # dummy data used for testing
+        data1 = [150.0, 0.0, 0.0, 0.0, 0.0, -30.0, 0.0, 0.0, 0.0]
 
         # attempt to convert string from Arduino into floats
         try:
-            print(data1)
+            #print(data1)
             data = [float(i) for i in data1]
-        # if float conversion fails skip this iteration
-            
+        # if float conversion fails skip this iteration   
         except:
             print("Bad data, cannot be converted to float")
             continue
-        if(len(data) < 3):
+
+        # make sure Arduino received all 9 values from IMU
+        # if it didn't skip this iteration as there will be 
+        # index out of bounds errors
+        if(len(data) < 9):
             continue
         r = rospy.Rate(10)
         set_j(limb, joints, data)
         r.sleep()
 
 def main():
-    """RSDK Joint Position Example: Keyboard Control
-
-    Use your dev machine's keyboard to control joint positions.
-
-    Each key corresponds to increasing or decreasing the angle
-    of a joint on Sawyer's arm. The increasing and descreasing
-    are represented by number key and letter key next to the number.
-    """
+    # Code is based off of : RSDK Joint Position Example: Keyboard Control
+    # Lab 3 from EE106A at UC Berkeley, Fall 2018
+    # main function was mostly unchanged
     epilog = """
     See help inside the example with the '?' key for key bindings.
     """
+
+    set_offset = True
 
     # valid_limbs = rs.joint_names()
     # if not valid_limbs:
@@ -156,9 +239,10 @@ def main():
 
     rospy.loginfo("Enabling robot...")
     rs.enable()
-    map_keyboard()
+    move_baxter()
     print("Done.")
 
 
 if __name__ == '__main__':
     main()
+
