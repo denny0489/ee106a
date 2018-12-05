@@ -76,27 +76,24 @@ def set_j(limb, joint_names, data):
 
     # joint names = left_s0, left_s1, left_e0, left_e1, left_w0, left_w1, left_w2
 
-    #joint_command[joint_names[6]] = rollRad
-    #joint_command[joint_names[5]] = pitchRad
+    joint_command[joint_names[6]] = rollRad
+    joint_command[joint_names[5]] = pitchRad
 
-    #joint_command[joint_names[4]] = rollRad2
-    #joint_command[joint_names[3]] = pitchRad2
+    joint_command[joint_names[4]] = rollRad2
+    joint_command[joint_names[3]] = pitchRad2
 
-    #joint_command[joint_names[2]] = rollRad3
-    #joint_command[joint_names[1]] = pitchRad3
+    joint_command[joint_names[2]] = rollRad3
+    joint_command[joint_names[1]] = pitchRad3
 
-    #joint_command[joint_names[0]] = yawRad
+    joint_command[joint_names[0]] = yawRad
 
-    joint_command[joint_names[6]] = 0.0
-    joint_command[joint_names[5]] = 0.0
-
-    joint_command[joint_names[4]] = 0.0
-    joint_command[joint_names[3]] = 0.0
-
-    joint_command[joint_names[2]] = 0.0
-    joint_command[joint_names[1]] = 0.0
-
-    joint_command[joint_names[0]] = 0.0
+    #joint_command[joint_names[6]] = 0.0
+    #joint_command[joint_names[5]] = 0.0
+    #joint_command[joint_names[4]] = 0.0
+    #joint_command[joint_names[3]] = 0.0
+    #joint_command[joint_names[2]] = 0.0
+    #joint_command[joint_names[1]] = 0.0
+    #joint_command[joint_names[0]] = 0.0
 
 
     limb.set_joint_positions(joint_command)
