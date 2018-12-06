@@ -27,28 +27,38 @@ import baxter_external_devices
 
 from baxter_interface import CHECK_VERSION
 
-#set_offset = True
-#offset = 0.0
-
+###
+# set_j:
+# purpose: take raw data from Arduino and process it
+#        : send processed data to Baxter resulting in movement
+# inputs:
+#     limb: left or right, we use left
+#     joint_names: 1x7 array of the names of Baxter's joints
+#     data: 1x9 array contains joint angles to move to
+# outputs: 
+#     calls limb.set_joint_position with processed data
+###
 def set_j(limb, joint_names, data):
 	
     #ORDER IS YAW PITCH ROLL
-    # data = IMU1, IMU2, IMU3
-    # IMU1  = wrist_yaw, wrist_pitch, wrist_roll
-    # IMU2  = elbow_yaw , elbow_pitch, elbow_roll
-    # IMU3  = shoulder_yaw, shoulder_pitch, shoulder_roll
+    # data  = [IMU1, IMU2, IMU3]
+    # IMU1  = [wrist_yaw, wrist_pitch, wrist_roll]
+    # IMU2  = [elbow_yaw , elbow_pitch, elbow_roll]
+    # IMU3  = [shoulder_yaw, shoulder_pitch, shoulder_roll]
     # We don't use elbow or shoulder yaw
-    # We simply use the wrist yaw to control joint left_s0
+    # We use the wrist yaw to control joint: left_s0
 
     N = 7
     joint_command = {}
 
     print(data)
 
-    # Data from first IMU (wrist)
+    # Data from first IMU in degrees (wrist)
     yaw = data[0] - 150
     if yaw > 180:
         yaw -= 360
+
+    # Code to keep Baxter from slamming into walls
     if yaw > 45:
         yaw = 45
     if yaw < -45:
@@ -56,17 +66,17 @@ def set_j(limb, joint_names, data):
     pitch = data[1]
     roll = data[2]
 
-    # Data from second IMU (elbow)
+    # Data from second IMU in degrees (elbow)
     # yaw2 = data[3]
     pitch2 = data[4]
     roll2 = data[5]
 
-    # Data from third IMU (shoulder)
+    # Data from third IMU in degrees (shoulder)
     # yaw3 = data[6]
     pitch3 = data[7]
 
     if pitch3 > 0:
-        pitch3 *= 2
+        pitch3 *= 1.75
 
     roll3 = data[8]
 
@@ -88,35 +98,23 @@ def set_j(limb, joint_names, data):
     pitchRad3 = -math.radians(pitch3)
     rollRad3 = -math.radians(roll3)
 
-    #if set_offset:
-    #    offset = -yawRad
-    #    set_offset = False
+    # joint_names[0] = left_s0 = yaw             = yawRad
+    # joint_names[1] = left_s1 = shoulder_pitch  = pitchRad3
+    # joint_names[2] = left_e0 = shoulder_roll   = rollRad3
+    # joint_names[3] = left_e1 = elbow_pitch     = pitchRad2
+    # joint_names[4] = left_w0 = elbow_roll      = rollRad2
+    # joint_names[5] = left_w1 = wrist_pitch     = pitchRad
+    # joint_names[6] = left_w2 = wrist_roll      = rollRad
 
-    #yawRad = yawRad + offset
-
-    # joint_names[0] = left_s0 = yaw
-    # joint_names[1] = left_s1 = shoulder_pitch
-    # joint_names[2] = left_e0 = shoulder_roll
-    # joint_names[3] = left_e1 = elbow_pitch
-    # joint_names[4] = left_w0 = elbow_roll
-    # joint_names[5] = left_w1 = wrist_pitch
-    # joint_names[6] = left_w2 = wrist_roll
-
-    # wrist joints rollrad pitch rad
     joint_command[joint_names[6]] = rollRad
     joint_command[joint_names[5]] = pitchRad
-
-    # elbow joints roll rad2 pitchrad2
     joint_command[joint_names[4]] = rollRad2
     joint_command[joint_names[3]] = pitchRad2
-
-    #shoulder joints roll rad3 pitch rad3
     joint_command[joint_names[2]] = rollRad3
     joint_command[joint_names[1]] = pitchRad3
-
-    # yawrad
     joint_command[joint_names[0]] = yawRad
 
+    # Set the joint positions
     limb.set_joint_positions(joint_command)
     #r.sleep()
 
@@ -142,6 +140,7 @@ def move_baxter():
     # Check for left_gripper
     #try:
     #    gripper = baxter_interface.gripper('left_gripper')
+    #    print("left gripper found")
     #except Exception as e:
     #    print (e)
     #    has_gripper = False
@@ -151,6 +150,7 @@ def move_baxter():
     # Still unsure why sometimes the word reference occasionaly prefaces joint names
     #try:
     #    gripper = baxter_interface.gripper('reference/left_gripper')
+    #    print("reference left gripper found")
     #except:
     #    has_gripper = False
     #    rospy.loginfo("The electric gripper, reference/left_gripper, is not detected on the robot.")
@@ -217,6 +217,13 @@ def move_baxter():
             continue
         r = rospy.Rate(10)
         set_j(limb, joints, data)
+
+        # Stretch goal: Use flex sensor to control Baxter's gripper
+        #if flex sensor closes:
+        #    set_g("close")
+        #if flex sensor opens:
+        #    set_g("open")
+
         r.sleep()
 
 def main():
