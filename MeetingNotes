@@ -44,4 +44,23 @@ successfully switched to three IMUs
 Modified Lab3 code to control Baxter
 Works, needs to be calibrated
 
+12/4/18
+10:00am-3:00pm
+Sensors calibrated
+Added code to python script to start by setting all of Baxter's joints to zero degrees
+Running into issues with frame names on Baxter
+
+12/5/18
+10:00am-2:00pm
+Python and Arduino code running smoothly
+Code added to deal with frame name issue
+
+12/6/18
+12:00pm-2:00pm
+Videos taken
+Final checks done
+Sensors "mounted" (taped) to jacket
+Discovered USB-ports on farthest lab computer don't work
+Website and slides discussed
+
 

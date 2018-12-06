@@ -1,21 +1,19 @@
-to log into baxter
-./baxter.sh ayrton.local
-
-new code directions:
-log into baxter
+Directions for running forward kinematics code for use with three IMUs:
+cd ~/ros_workspaces/lab3_baxter
+./baxter.sh [robotname].local
 source devel/setup.bash
-cd ~/ros_workspaces/lab3_baxter/joint_ctrl
-python joint_ctrl_keyboard.py
+cd joint_ctrl
+python joint_ctrl.py	*** This runs the actual code ***
 
-make sure robot is enabled
+Make sure robot is enabled:
 rosrun baxter_tools enable_robot.py -e
 
-make sure robot frames aren't prefaced with "reference"
+Make sure robot frames aren't prefaced with "reference":
 rosrun rqt_tf_tree rqt_tf_tree
 
 
 
-old code directions:
+Directions for running inverse kinematics code for use with two IR cameras:
 run the following in order in separate terminals, each line is a separate instruction
 
 Terminal 1:

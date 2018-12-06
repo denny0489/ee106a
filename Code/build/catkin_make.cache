@@ -1,2 +1,0 @@
-ik:mv
--DCATKIN_DEVEL_PREFIX=/home/cc/ee106a/fa18/class/ee106a-aaj/ros_workspaces/lab5/devel -DCMAKE_INSTALL_PREFIX=/home/cc/ee106a/fa18/class/ee106a-aaj/ros_workspaces/lab5/install -G Unix Makefiles
