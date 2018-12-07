@@ -9,7 +9,9 @@ joint positions and translating the sensor measurements to Baxter's joints.
 
 ### Resources:
 [I2C Multiplexer](https://learn.adafruit.com/adafruit-tca9548a-1-to-8-i2c-multiplexer-breakout/wiring-and-test)
+
 [BNO055 IMU](https://learn.adafruit.com/adafruit-lsm9ds1-accelerometer-plus-gyro-plus-magnetometer-9-dof-breakout/downloads)
+
 [IR Positioning Camera](https://www.dfrobot.com/wiki/index.php/Positioning_ir_camera)
 
 "IR_Code unused" includes the ROSpy code and the arduino code we had developed but could not use due to IR Camera Failure.
