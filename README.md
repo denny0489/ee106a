@@ -14,5 +14,5 @@ joint positions and translating the sensor measurements to Baxter's joints.
 
 [IR Positioning Camera](https://www.dfrobot.com/wiki/index.php/Positioning_ir_camera)
 
-"IRCode_unused" includes the ROSpy code and the arduino code we had developed but could not use due to IR Camera Failure.
+"IRCode_unused/" includes the arduino code and "IRCode_unused/src/mv/src/" has ROSpy code we had developed but could not use due to IR Camera Failure.
 
