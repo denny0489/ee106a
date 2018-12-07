@@ -147,7 +147,7 @@ def move_baxter():
     #    rospy.loginfo("The electric gripper, left_gripper, is not detected on the robot.")
 
     # Check for reference/left_gripper
-    # Still unsure why sometimes the word reference occasionaly prefaces joint names
+    # Still unsure why sometimes the word reference occasionally prefaces joint names
     #try:
     #    gripper = baxter_interface.gripper('reference/left_gripper')
     #    print("reference left gripper found")
@@ -194,7 +194,7 @@ def move_baxter():
     while not done and not rospy.is_shutdown():
         # pure data from Arduino
         # will be a string that needs to be decoded and split
-        # delimeter is a space
+        # delimiter is a space
         data1 = arduino.readline().decode("utf-8", "ignore").split(" ")
 
         # dummy data used for testing
