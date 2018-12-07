@@ -1,12 +1,7 @@
 # UC Berkeley, EE106A, Fall 2018
 Final Project for EE106A
 
-Team Members: 
-Amanda Boyle
-Syung (Denny) Min
-Daniel Benniah John
-Haopeng (Jason) Liang
-Junlin Liu
+Team Members: Amanda Boyle, Syung (Denny) Min, Daniel Benniah John, Haopeng (Jason) Liang, Junlin Liu
 
 Abstract:
 The UltraBaxter's main goal is to be able to directly manipulate the Baxter's joints 
