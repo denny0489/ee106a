@@ -1,5 +1,4 @@
-# UC Berkeley, EE106A, Fall 2018
-## Final Project for EE106A
+# UC Berkeley, EE106A, Fall 2018 Final Project Team 1 - UltraBaxter
 
 Team Members: Amanda Boyle, Syung (Denny) Min, Daniel Benniah John, Haopeng (Jason) Liang, Junlin Liu
 
